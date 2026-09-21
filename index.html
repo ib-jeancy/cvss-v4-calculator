@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<!--
+  Calculateur CVSS v4.0 — interface française
+  Logique de calcul : Copyright (c) 2023 FIRST.ORG, Inc., Red Hat, and contributors
+  SPDX-License-Identifier: BSD-2-Clause
+-->
+<html lang="fr" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur CVSS v4.0 — en français</title>
+    <meta name="description" content="Calculateur CVSS v4.0 entièrement en français : métriques de base, de menace, environnementales et supplémentaires, score et vecteur partageable.">
+    <meta name="color-scheme" content="dark light">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%2338bdf8' d='M16 2 4 7v9c0 7.2 5 12.4 12 14 7-1.6 12-6.8 12-14V7z'/%3E%3C/svg%3E">
+    <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
+</head>
+<body>
+<div id="app" v-cloak>
+
+    <!-- ══════════ Barre supérieure ══════════ -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" width="22" height="22">
+                        <path d="M16 2 4 7v9c0 7.2 5 12.4 12 14 7-1.6 12-6.8 12-14V7z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+                        <path d="m11 16 3.5 3.5L21 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <span class="brand-text">
+                    <strong>Calculateur CVSS</strong>
+                    <span class="brand-badge">v4.0</span>
+                </span>
+            </div>
+
+            <p class="brand-sub">Common Vulnerability Scoring System · version française</p>
+
+            <div class="topbar-actions">
+                <button class="ghost-btn" type="button" @click="onReset" title="Remettre toutes les métriques à leur valeur par défaut">
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span>Réinitialiser</span>
+                </button>
+                <button class="ghost-btn icon-only" type="button" @click="toggleTheme" :title="theme === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'" :aria-label="theme === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'">
+                    <svg v-if="theme === 'dark'" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <svg v-else viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="shell">
+
+        <!-- ══════════ Colonne métriques ══════════ -->
+        <section class="metrics-col" aria-label="Métriques">
+
+            <nav class="tabs" role="tablist" aria-label="Catégories de métriques">
+                <button
+                    v-for="(data, name) in cvssConfigData"
+                    :key="data.id"
+                    class="tab"
+                    :class="{ 'is-active': activeTab === data.id }"
+                    role="tab"
+                    type="button"
+                    :aria-selected="activeTab === data.id"
+                    @click="activeTab = data.id">
+                    <span class="tab-label">{{ tabLabel(name) }}</span>
+                    <span class="tab-count" v-if="changedCount(data)">{{ changedCount(data) }}</span>
+                </button>
+            </nav>
+
+            <div class="metric-panel" v-for="(data, name) in cvssConfigData" :key="'p-' + data.id" v-show="activeTab === data.id" role="tabpanel">
+
+                <div class="panel-head">
+                    <h2>{{ name }}</h2>
+                    <p>{{ data.description }}</p>
+                    <p class="fill-hint">
+                        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.4v.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        Section à renseigner par {{ data.fill }}.
+                    </p>
+                </div>
+
+                <div class="group" v-for="(groupData, groupName) in data.metric_groups" :key="data.id + groupName">
+                    <h3 class="group-title" v-if="groupName">{{ groupName }}</h3>
+
+                    <div class="metric" v-for="(metricData, metricName) in groupData" :key="metricData.short">
+                        <div class="metric-head">
+                            <span class="metric-name">{{ metricName }}</span>
+                            <span class="metric-code">{{ metricData.short }}</span>
+                            <button
+                                class="info-btn"
+                                type="button"
+                                :aria-label="'Définition de : ' + metricName"
+                                @mouseenter="showTip($event, metricData.tooltip)"
+                                @focus="showTip($event, metricData.tooltip)"
+                                @mouseleave="hideTip"
+                                @blur="hideTip"
+                                @click.prevent>?</button>
+                            <span class="metric-current" v-if="isSet(metricData)">renseignée</span>
+                        </div>
+
+                        <div class="options" :data-count="Object.keys(metricData.options).length">
+                            <button
+                                v-for="(optionData, optionName) in metricData.options"
+                                :key="metricData.short + optionData.value"
+                                class="opt"
+                                type="button"
+                                :class="{ 'is-selected': vectorInstance.metrics[metricData.short] === optionData.value, 'is-neutral': optionData.value === 'X' }"
+                                :aria-pressed="vectorInstance.metrics[metricData.short] === optionData.value"
+                                @click="onButton(metricData.short, optionData.value)"
+                                @mouseenter="showTip($event, optionData.tooltip)"
+                                @focus="showTip($event, optionData.tooltip)"
+                                @mouseleave="hideTip"
+                                @blur="hideTip">
+                                <span class="opt-text">{{ label(optionName) }}</span>
+                                <span class="opt-code" v-if="code(optionName)">{{ code(optionName) }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════ Colonne score ══════════ -->
+        <aside class="score-col" aria-label="Résultat">
+            <div class="score-card" :data-severity="severityKey">
+
+                <div class="gauge-wrap">
+                    <svg class="gauge" viewBox="0 0 140 140" role="img" :aria-label="'Score ' + score + ' sur 10, sévérité ' + severityLabel">
+                        <circle class="gauge-track" cx="70" cy="70" r="60"/>
+                        <circle class="gauge-arc" cx="70" cy="70" r="60"
+                                :stroke-dasharray="gaugeCircumference"
+                                :stroke-dashoffset="gaugeOffset"/>
+                    </svg>
+                    <div class="gauge-center">
+                        <span class="gauge-score">{{ score.toFixed(1) }}</span>
+                        <span class="gauge-max">/ 10</span>
+                    </div>
+                </div>
+
+                <div class="severity-pill">{{ severityLabel }}</div>
+                <p class="severity-note">{{ nomenclature }} · {{ contextLabel }}</p>
+
+                <div class="vector-box">
+                    <code class="vector">{{ vector }}</code>
+                    <div class="vector-actions">
+                        <button class="solid-btn" type="button" @click="copyVector">
+                            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            Copier le vecteur
+                        </button>
+                        <button class="ghost-btn" type="button" @click="copyLink">
+                            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M10 13.5a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7l-1.3 1.3M14 10.5a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 1 0 5.7 5.7l1.3-1.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            Lien
+                        </button>
+                    </div>
+                </div>
+
+                <div class="breakdown">
+                    <button class="breakdown-toggle" type="button" @click="showDetails = !showDetails" :aria-expanded="showDetails">
+                        <span>Détail du macro-vecteur</span>
+                        <span class="chevron" :class="{ 'is-open': showDetails }" aria-hidden="true">›</span>
+                    </button>
+                    <div class="breakdown-body" v-show="showDetails">
+                        <p class="macro">Macro-vecteur <strong>{{ macroVector }}</strong></p>
+                        <ul>
+                            <li v-for="(level, label) in breakdown" :key="label">
+                                <span class="bd-label">{{ label }}</span>
+                                <span class="bd-level" :data-level="levelKey(level)">{{ level }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-row" v-for="item in legend" :key="item.key">
+                        <span class="dot" :data-severity="item.key"></span>
+                        <span class="legend-name">{{ item.name }}</span>
+                        <span class="legend-range">{{ item.range }}</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="footer">
+        <p>
+            Calculs conformes au
+            <a href="https://www.first.org/cvss/v4.0/specification-document" target="_blank" rel="noopener">document de spécification CVSS v4.0</a>
+            du FIRST. Moteur de calcul sous licence BSD-2-Clause (FIRST.ORG, Red Hat et contributeurs).
+        </p>
+        <p class="footer-sub">Interface française — survolez le <span class="mini-info">?</span> ou une valeur pour afficher sa définition.</p>
+    </footer>
+
+    <!-- Infobulle flottante -->
+    <div class="tip" v-show="tip.visible" :style="{ top: tip.y + 'px', left: tip.x + 'px' }" role="tooltip" aria-live="polite">{{ tip.text }}</div>
+
+    <!-- Notification -->
+    <div class="toast" :class="{ 'is-visible': toast.visible }" role="status">{{ toast.text }}</div>
+</div>
+
+<script src="cvss40.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

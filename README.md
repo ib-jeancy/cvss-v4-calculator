@@ -1,12 +1,53 @@
-# CVSS v4.0 calculator
-The CVSS v4.0 Calculator is built based on the Common Vulnerability Scoring System (CVSS) version 4.0 [Specification Document](https://www.first.org/cvss/v4.0/specification-document). This document serves as the authoritative reference for understanding how to calculate the severity of vulnerabilities.
+# Calculateur CVSS v4.0 — version française
 
-This project is a web-based application that calculates the CVSS score for a given vulnerability. The core logic is implemented using JavaScript classes that encapsulate the CVSS metrics, scoring calculations, and vector string manipulations:
+Calculateur web du **Common Vulnerability Scoring System (CVSS) version 4.0**, entièrement traduit
+en français et doté d'une interface repensée (thème sombre et clair, jauge de score animée, vecteur
+partageable par lien).
 
-- The `Vector` class handles the CVSS vector string and the associated metrics. It is the backbone of the application's logic, providing methods to update and validate the vector string, compute equivalent classes, and derive metrics values.
-- The `CVSS40` class is responsible for calculating the CVSS v4.0 score. It interacts with an instance of the `Vector` class to derive the score and determine the severity level.
+Les calculs suivent le [document de spécification CVSS v4.0](https://www.first.org/cvss/v4.0/specification-document)
+du FIRST, qui fait référence pour l'évaluation de la gravité des vulnérabilités.
 
-The application is live and can be accessed at [CVSS v4.0 Calculator](https://redhatproductsecurity.github.io/cvss-v4-calculator/).
+## Fonctionnalités
 
-## License
-This project is licensed under the BSD-2-Clause License. See the [LICENSE](./LICENSE) file for more information.
+- **Les 32 métriques de la spécification**, réparties en cinq onglets :
+  - Métriques de base (AV, AC, AT, PR, UI, VC, VI, VA, SC, SI, SA)
+  - Métriques de menace (E)
+  - Métriques environnementales — métriques de base modifiées (MAV … MSA)
+  - Métriques environnementales — exigences de sécurité (CR, IR, AR)
+  - Métriques supplémentaires (S, AU, R, V, RE, U)
+- **Score et sévérité** calculés en direct, avec nomenclature CVSS-B / BT / BE / BTE.
+- **Détail du macro-vecteur** (les six classes d'équivalence) pour comprendre d'où vient le score.
+- **Définitions en français** de chaque métrique et de chaque valeur, au survol.
+- **Vecteur partageable** : copie en un clic, synchronisation avec l'ancre de l'URL — un lien
+  rouvre le calculateur avec les mêmes valeurs.
+- **Thème sombre ou clair**, mémorisé dans le navigateur, et interface adaptée au mobile.
+
+## Architecture
+
+| Fichier | Rôle |
+| --- | --- |
+| `index.html` | Structure de la page et gabarit Vue 3 |
+| `styles.css` | Thèmes, mise en page et composants |
+| `app.js` | Couche interface : onglets, infobulles, presse-papiers, thème, jauge |
+| `cvss40.js` | Moteur de calcul : classes `Vector` et `CVSS40` |
+| `metrics.json` | Libellés et définitions françaises de toutes les métriques |
+
+- La classe `Vector` gère la chaîne du vecteur et les métriques associées : mise à jour, validation,
+  calcul des classes d'équivalence.
+- La classe `CVSS40` s'appuie sur une instance de `Vector` pour produire le score et la sévérité.
+- `metrics.json` ne pilote que l'affichage : les valeurs admissibles restent définies dans `cvss40.js`.
+
+## Utilisation locale
+
+```bash
+python3 -m http.server 8000
+# puis ouvrir http://localhost:8000
+```
+
+Un simple serveur statique suffit : `metrics.json` est chargé par `fetch`, l'ouverture directe du
+fichier en `file://` est donc bloquée par le navigateur.
+
+## Licence
+
+Projet sous licence BSD-2-Clause. Voir le fichier [LICENSE](./LICENSE).
+Moteur de calcul : copyright FIRST.ORG, Inc., Red Hat et contributeurs.
